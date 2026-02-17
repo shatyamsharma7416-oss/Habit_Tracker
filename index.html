@@ -590,6 +590,15 @@
             <div class="sync-dot" id="syncDot"></div>
             <span id="syncStatus">Connected to server</span>
         </div>
+        <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button onclick="downloadData()" style="padding: 0.6rem 1.2rem; background: #52d87f; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 0.9rem; transition: all 0.3s;">
+                📥 Download My Data
+            </button>
+            <button onclick="document.getElementById('fileInput').click()" style="padding: 0.6rem 1.2rem; background: #5dade2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 0.9rem; transition: all 0.3s;">
+                📤 Upload Data
+            </button>
+            <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="uploadData(event)">
+        </div>
     </header>
 
     <div class="container">
@@ -817,6 +826,71 @@
             dot.className = 'sync-dot';
             if (status === 'syncing') dot.classList.add('syncing');
             if (status === 'error') dot.classList.add('error');
+        }
+
+        // Download user's data as JSON file
+        function downloadData() {
+            try {
+                const dataStr = JSON.stringify({ habits: appState.habits }, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `habitflow-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('✅ Data downloaded successfully!');
+            } catch (error) {
+                console.error('Error downloading data:', error);
+                alert('❌ Failed to download data');
+            }
+        }
+
+        // Upload and replace data from JSON file
+        function uploadData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Validate the JSON structure
+                    if (data.habits && Array.isArray(data.habits)) {
+                        if (confirm('⚠️ This will replace all your current habits with the uploaded data. Are you sure?')) {
+                            // Replace all habits with uploaded data
+                            appState.habits = data.habits.map(habit => ({
+                                id: habit.id || Date.now(),
+                                name: habit.name || 'Unnamed',
+                                category: habit.category || 'Other',
+                                color: habit.color || '#ff6b6b',
+                                completed: habit.completed && typeof habit.completed === 'object' ? habit.completed : {},
+                                streak: habit.streak || 0,
+                                createdAt: habit.createdAt || new Date().toISOString()
+                            }));
+
+                            // Save to server and localStorage
+                            await saveHabitsToServer();
+                            renderHabits();
+                            updateDashboard();
+                            populateHabitSelect();
+                            
+                            alert('✅ Data uploaded successfully! All old data has been replaced.');
+                        }
+                    } else {
+                        alert('❌ Invalid file format. Please upload a valid HabitFlow JSON file.');
+                    }
+                } catch (error) {
+                    console.error('Error uploading data:', error);
+                    alert('❌ Error reading file. Please make sure it\'s a valid JSON file.');
+                }
+            };
+            reader.readAsText(file);
+            // Reset input
+            event.target.value = '';
         }
 
         // Color Selection
