@@ -1,26 +1,3 @@
 {
-  "habits": [
-    {
-      "id": 1771351140140,
-      "name": "exe",
-      "category": "Health",
-      "color": "#ff6b6b",
-      "createdAt": "2026-02-17T17:59:00.140Z",
-      "completed": {
-        "2026-02-17": true
-      },
-      "streak": 1
-    },
-    {
-      "id": 1771351230926,
-      "name": "study",
-      "category": "Creative",
-      "color": "#fd79a8",
-      "createdAt": "2026-02-17T18:00:30.926Z",
-      "completed": {
-        "2026-02-17": true
-      },
-      "streak": 1
-    }
-  ]
+  "habits": []
 }
