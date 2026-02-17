@@ -693,6 +693,12 @@
                         <p style="text-align: center; color: #999;">No data yet</p>
                     </div>
                 </div>
+
+                <!-- Category Distribution -->
+                <div class="chart-card">
+                    <div class="chart-title">Category Distribution</div>
+                    <canvas id="categoryChart" width="300" height="300"></canvas>
+                </div>
             </div>
 
             <!-- Habit Calendar -->
@@ -708,11 +714,13 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
         // Global state
         let appState = {
             habits: [],
-            selectedColor: '#ff6b6b'
+            selectedColor: '#ff6b6b',
+            categoryChart: null
         };
 
         const API_BASE = 'http://localhost:3000/api';
@@ -958,6 +966,7 @@
             document.getElementById('progressCircle').style.background = `conic-gradient(#667eea 0deg, #667eea ${angle}deg, #f0f0f0 ${angle}deg)`;
 
             updateTopHabits();
+            updateCategoryChart();
         }
 
         // Top Habits
@@ -988,6 +997,55 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Update Category Chart
+        function updateCategoryChart() {
+            const ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+
+            const categories = {};
+            appState.habits.forEach(h => {
+                categories[h.category] = (categories[h.category] || 0) + 1;
+            });
+
+            const colors = ['#667eea', '#764ba2', '#52d87f', '#5dade2', '#ffa502', '#ff6b6b', '#4ecdc4'];
+            
+            if (appState.categoryChart) {
+                appState.categoryChart.destroy();
+            }
+
+            if (Object.keys(categories).length === 0) {
+                ctx.style.display = 'none';
+                return;
+            }
+
+            ctx.style.display = 'block';
+            appState.categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: colors,
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: "'Poppins', sans-serif", size: 12 },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // Populate Habit Select
