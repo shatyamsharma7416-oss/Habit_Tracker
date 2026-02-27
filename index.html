@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitFlow – Track. Grow. Thrive.</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0f14;
+            --surface: #131720;
+            --surface2: #1a2030;
+            --surface3: #212840;
+            --border: rgba(255,255,255,0.07);
+            --green: #4ade80;
+            --green-dim: rgba(74,222,128,0.12);
+            --green-glow: rgba(74,222,128,0.3);
+            --blue: #60a5fa;
+            --purple: #a78bfa;
+            --orange: #fb923c;
+            --teal: #2dd4bf;
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+            --text-dim: #94a3b8;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== AUTH SCREEN ===== */
+        #authScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at 60% 20%, rgba(74,222,128,0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 20% 80%, rgba(96,165,250,0.07) 0%, transparent 50%),
+                        var(--bg);
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(74,222,128,0.05);
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-logo h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 2.2rem;
+            color: var(--green);
+            letter-spacing: -1px;
+        }
+
+        .auth-logo p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 2rem;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.65rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            transition: all 0.25s;
+            border: none;
+            background: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .auth-tab.active {
+            background: var(--green);
+            color: #0d0f14;
+        }
+
+        .auth-form { display: flex; flex-direction: column; gap: 1rem; }
+
+        .form-field label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-field input {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1.1rem;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(74,222,128,0.12);
+        }
+
+        .btn-auth {
+            background: var(--green);
+            color: #0d0f14;
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-auth:hover { background: #86efac; transform: translateY(-1px); }
+        .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .auth-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #f87171;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            display: none;
+        }
+
+        /* ===== APP LAYOUT ===== */
+        #app { display: none; min-height: 100vh; }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 1.5rem;
+            color: var(--green);
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-logo span { font-size: 1.3rem; }
+
+        .nav-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.75rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.92rem;
+            margin-bottom: 0.2rem;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+        .nav-item.active {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(74,222,128,0.2);
+        }
+
+        .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+
+        .sidebar-user {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green), var(--teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #0d0f14;
+            flex-shrink: 0;
+        }
+
+        .user-name { font-weight: 600; font-size: 0.88rem; }
+        .user-email { font-size: 0.76rem; color: var(--text-muted); }
+
+        .btn-logout {
+            width: 100%;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #f87171;
+            border-radius: var(--radius-sm);
+            padding: 0.6rem;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover { background: rgba(239,68,68,0.2); }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            padding: 2rem;
+            background: radial-gradient(ellipse at 80% 0%, rgba(74,222,128,0.04) 0%, transparent 50%), var(--bg);
+            overflow-y: auto;
+        }
+
+        .page { display: none; animation: fadeUp 0.3s ease-out; }
+        .page.active { display: block; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .page-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 1.8rem; letter-spacing: -0.5px; }
+        .page-subtitle { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.25rem; }
+
+        .date-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.4rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 80px; height: 80px;
+            border-radius: 0 var(--radius) 0 80px;
+            opacity: 0.07;
+        }
+
+        .stat-card.green::before { background: var(--green); }
+        .stat-card.blue::before { background: var(--blue); }
+        .stat-card.orange::before { background: var(--orange); }
+        .stat-card.purple::before { background: var(--purple); }
+
+        .stat-icon { font-size: 1.3rem; margin-bottom: 0.75rem; }
+        .stat-number { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 2.4rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+        .stat-label { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.3rem; }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+
+        .stat-badge.up { background: rgba(74,222,128,0.15); color: var(--green); }
+        .stat-badge.neutral { background: rgba(96,165,250,0.15); color: var(--blue); }
+
+        /* ===== DASHBOARD GRID ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+
+        .card.span-2 { grid-column: span 2; }
+        .card.span-3 { grid-column: span 3; }
+
+        /* ===== CIRCULAR PROGRESS ===== */
+        .ring-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ring-wrap { position: relative; width: 130px; height: 130px; }
+
+        .ring-svg { transform: rotate(-90deg); }
+
+        .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
+        .ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .ring-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring-percent { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 1.6rem; font-weight: 800; }
+        .ring-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+        /* ===== HABIT OVERVIEW TABLE ===== */
+        .habit-overview {
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        .habit-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .habit-table th {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.4rem 0.5rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .habit-table th:first-child { text-align: left; }
+
+        .habit-table td {
+            padding: 0.5rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .habit-name-cell { text-align: left !important; font-size: 0.88rem; font-weight: 500; }
+
+        .dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            transition: transform 0.2s;
+        }
+
+        .dot:hover { transform: scale(1.15); }
+        .dot.done { background: var(--green); color: #0d0f14; }
+        .dot.miss { background: var(--surface3); color: var(--text-muted); }
+        .dot.today { border: 2px solid var(--green); cursor: pointer; }
+        .dot.today:hover { background: var(--green-dim); }
+
+        /* ===== PROGRESS BARS ===== */
+        .progress-list { display: flex; flex-direction: column; gap: 1rem; }
+
+        .progress-item {}
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+        .progress-name { font-size: 0.88rem; font-weight: 500; }
+        .progress-pct { font-size: 0.82rem; font-weight: 700; color: var(--green); }
+
+        .progress-bar {
+            height: 7px;
+            background: var(--surface2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== TOP HABITS ===== */
+        .top-habits-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        .top-habit-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem;
+            border-radius: var(--radius-sm);
+            background: var(--surface2);
+        }
+
+        .top-habit-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            background: var(--green-dim);
+            border: 1.5px solid var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green);
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .top-habit-name { font-size: 0.88rem; font-weight: 500; }
+
+        /* ===== STREAK DAYS ===== */
+        .streak-days {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 1rem;
+        }
+
+        .streak-day {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--surface2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            gap: 1px;
+        }
+
+        .streak-day.active { background: var(--green-dim); border: 1px solid rgba(74,222,128,0.3); }
+        .streak-day .day-label { font-weight: 700; font-size: 0.6rem; }
+        .streak-day .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--surface3); }
+        .streak-day.active .day-dot { background: var(--green); }
+
+        /* ===== LINE CHART AREA ===== */
+        .chart-wrap { position: relative; height: 150px; margin-top: 0.5rem; }
+
+        /* ===== HEATMAP ===== */
+        .heatmap-months {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .heatmap-cell {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            background: var(--surface2);
+            cursor: pointer;
+            transition: transform 0.15s;
+            position: relative;
+        }
+
+        .heatmap-cell:hover { transform: scale(1.3); }
+        .heatmap-cell.done { background: var(--green); opacity: 0.8; }
+        .heatmap-cell.today { outline: 2px solid var(--green); }
+
+        /* ===== HABITS PAGE ===== */
+        .habits-controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .filter-btn.active, .filter-btn:hover { background: var(--green-dim); border-color: rgba(74,222,128,0.3); color: var(--green); }
+
+        .habits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .habit-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.4rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fadeUp 0.3s ease-out;
+        }
+
+        .habit-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+        .habit-card-accent {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .habit-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+        .habit-card-name { font-weight: 700; font-size: 1rem; }
+        .habit-card-cat { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+        .habit-card-streak {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--orange);
+            background: rgba(251,146,60,0.1);
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        .habit-card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+        .btn-mark {
+            flex: 1;
+            padding: 0.65rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-mark.done { background: var(--green-dim); border-color: rgba(74,222,128,0.3); color: var(--green); }
+        .btn-mark.done:hover { background: var(--green); color: #0d0f14; }
+        .btn-mark.pending { background: transparent; border-color: rgba(74,222,128,0.3); color: var(--green); }
+        .btn-mark.pending:hover { background: var(--green-dim); }
+
+        .btn-del {
+            padding: 0.65rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(239,68,68,0.2);
+            background: rgba(239,68,68,0.06);
+            color: #f87171;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-del:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); }
+
+        /* ===== ADD HABIT FORM ===== */
+        .add-form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 600px;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.45rem;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 1rem;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field input:focus, .field select:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(74,222,128,0.1);
+        }
+
+        .field select option { background: var(--surface2); }
+
+        .color-grid {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .color-dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.selected { border-color: white; box-shadow: 0 0 0 2px white; }
+
+        .btn-create {
+            background: var(--green);
+            color: #0d0f14;
+            font-weight: 700;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.9rem 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .btn-create:hover { background: #86efac; transform: translateY(-1px); }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state h3 { color: var(--text-dim); margin-bottom: 0.5rem; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--green);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1.25rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-left-color: #f87171; }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 900px) {
+            .app-layout { grid-template-columns: 1fr; }
+            .sidebar { position: fixed; left: -280px; z-index: 1000; transition: left 0.3s; height: 100vh; width: 240px; }
+            .sidebar.open { left: 0; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .card.span-2, .card.span-3 { grid-column: span 1; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ===== CONSISTENCY GAUGE ===== */
+        .gauge-wrap { position: relative; width: 140px; height: 80px; overflow: hidden; margin: 0 auto; }
+        .gauge-svg { }
+        .gauge-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 1.8rem; font-weight: 800; text-align: center; }
+        .gauge-sub { font-size: 0.72rem; color: var(--text-muted); text-align: center; }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #0d0f14;
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+        .sync-dot.pulse { animation: blink 1.5s ease-in-out infinite; }
+        .sync-dot.error { background: #f87171; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div id="authScreen">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <h1>🌿 HabitFlow</h1>
+            <p>Transform Your Life, One Habit at a Time</p>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="showAuthTab('login')">Sign In</button>
+            <button class="auth-tab" onclick="showAuthTab('register')">Register</button>
+        </div>
+        <div id="authError" class="auth-error"></div>
+        <div id="loginForm" class="auth-form">
+            <div class="form-field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@example.com" />
+            </div>
+            <div class="form-field">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" />
+            </div>
+            <button class="btn-auth" onclick="handleLogin()">Sign In</button>
+        </div>
+        <div id="registerForm" class="auth-form" style="display:none;">
+            <div class="form-field">
+                <label>Name</label>
+                <input type="text" id="regName" placeholder="Sarah Johnson" />
+            </div>
+            <div class="form-field">
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" />
+            </div>
+            <div class="form-field">
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Min. 6 characters" />
+            </div>
+            <button class="btn-auth" onclick="handleRegister()">Create Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+    <div class="app-layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo"><span>🌿</span> HabitFlow</div>
+            <div class="nav-section-title">Main</div>
+            <button class="nav-item active" onclick="showPage('dashboard', this)">
+                <span class="nav-icon">📊</span> Dashboard
+            </button>
+            <button class="nav-item" onclick="showPage('habits', this)">
+                <span class="nav-icon">📋</span> My Habits
+            </button>
+            <button class="nav-item" onclick="showPage('add', this)">
+                <span class="nav-icon">➕</span> Add Habit
+            </button>
+            <div class="sync-status" style="margin-left: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+                <div class="sync-dot" id="syncDot"></div>
+                <span id="syncText">Connected</span>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">S</div>
+                    <div>
+                        <div class="user-name" id="userName">Sarah</div>
+                        <div class="user-email" id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c5b0b6a0b785a0bda4a8b5a9a0eba6aaa8">[email&#160;protected]</a></div>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="logout()">Sign Out</button>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+
+            <!-- DASHBOARD PAGE -->
+            <div id="page-dashboard" class="page active">
+                <div class="page-header">
+                    <div>
+                        <div class="page-title" id="welcomeTitle">Welcome back, Sarah! 👋</div>
+                        <div class="page-subtitle" id="todayDate">Thursday, February 26</div>
+                    </div>
+                    <div class="date-badge" id="headerDate">—</div>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="stats-row">
+                    <div class="stat-card green">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-number" id="statCompleted">0</div>
+                        <div class="stat-label">Habits Completed</div>
+                        <div class="stat-badge up">↑ This Week</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-number" id="statStreak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-badge neutral" id="streakDays">Days</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-number" id="statMonthly">0%</div>
+                        <div class="stat-label">Monthly Progress</div>
+                        <div class="stat-badge up" id="monthlyBadge">This Month</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-number" id="statGoals">0/0</div>
+                        <div class="stat-label">Goals Today</div>
+                        <div class="stat-badge neutral" id="goalsBadge">Complete</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1 -->
+                <div class="dashboard-grid">
+                    <!-- Habit Overview -->
+                    <div class="card span-3">
+                        <div class="card-title">Habit Overview — Last 14 Days</div>
+                        <div class="habit-overview">
+                            <table class="habit-table" id="habitOverviewTable">
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 2 -->
+                <div class="dashboard-grid">
+                    <!-- Weekly Progress -->
+                    <div class="card">
+                        <div class="card-title">Weekly Habit Progress</div>
+                        <div class="progress-list" id="weeklyProgressList"></div>
+                    </div>
+
+                    <!-- Completion Rate donut -->
+                    <div class="card">
+                        <div class="card-title">Habit Completion Rate</div>
+                        <div class="ring-container" style="margin: 0.5rem 0 1rem;">
+                            <div class="ring-wrap">
+                                <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+                                    <circle class="ring-bg" cx="65" cy="65" r="55"/>
+                                    <circle class="ring-fill" id="completionRing" cx="65" cy="65" r="55"
+                                        stroke="url(#greenGrad)"
+                                        stroke-dasharray="345.4"
+                                        stroke-dashoffset="345.4"/>
+                                    <defs>
+                                        <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#4ade80"/>
+                                            <stop offset="100%" stop-color="#2dd4bf"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="ring-text">
+                                    <div class="ring-percent" id="completionPct" style="color: var(--green);">0%</div>
+                                    <div class="ring-sub">Complete</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
+                            <span>● <span style="color: var(--green);">Completed</span></span>
+                            <span>● <span style="color: var(--surface3);">Missed</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Top Habits -->
+                    <div class="card">
+                        <div class="card-title">Top Habits This Month</div>
+                        <div class="top-habits-list" id="topHabitsList"></div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 3 -->
+                <div class="dashboard-grid">
+                    <!-- Daily Check-in Line Chart -->
+                    <div class="card span-2">
+                        <div class="card-title">Daily Check-In — This Week</div>
+                        <div class="chart-wrap">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Consistency Gauge -->
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="card-title" style="text-align:center;">Consistency</div>
+                        <canvas id="gaugeChart" width="200" height="110"></canvas>
+                        <div class="gauge-num" id="gaugeNum">0%</div>
+                        <div class="gauge-sub" style="margin-top: 0.25rem;">30-day average</div>
+                    </div>
+                </div>
+
+                <!-- Heatmap -->
+                <div class="dashboard-grid">
+                    <div class="card span-3">
+                        <div class="card-title">Activity Heatmap — Last 90 Days</div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <select id="heatmapHabitSelect" onchange="renderHeatmap()"
+                                style="background:var(--surface2); border:1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.4rem 0.75rem; font-family:'DM Sans',sans-serif; font-size: 0.85rem;">
+                                <option value="all">All Habits</option>
+                            </select>
+                        </div>
+                        <div class="heatmap-months" id="heatmapGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HABITS PAGE -->
+            <div id="page-habits" class="page">
+                <div class="page-header">
+                    <div>
+                        <div class="page-title">My Habits</div>
+                        <div class="page-subtitle" id="habitsCount">0 active habits</div>
+                    </div>
+                    <button class="btn-create" style="margin-top: 0;" onclick="showPage('add', document.querySelector('.nav-item:nth-child(4)'))">+ New Habit</button>
+                </div>
+                <div class="habits-controls" id="categoryFilters"></div>
+                <div class="habits-grid" id="habitsGrid"></div>
+                <div class="empty-state" id="habitsEmpty" style="display:none;">
+                    <div class="empty-state-icon">🌱</div>
+                    <h3>No habits yet</h3>
+                    <p>Start building better habits today!</p>
+                </div>
+            </div>
+
+            <!-- ADD HABIT PAGE -->
+            <div id="page-add" class="page">
+                <div class="page-header">
+                    <div>
+                        <div class="page-title">Add New Habit</div>
+                        <div class="page-subtitle">Build a positive routine</div>
+                    </div>
+                </div>
+                <div class="add-form-card">
+                    <div class="form-grid">
+                        <div class="field" style="grid-column: span 2;">
+                            <label>Habit Name</label>
+                            <input type="text" id="habitName" placeholder="e.g., Read 30 minutes, Drink Water..." />
+                        </div>
+                        <div class="field">
+                            <label>Category</label>
+                            <select id="habitCategory">
+                                <option value="Health">🏃 Health & Fitness</option>
+                                <option value="Learning">📚 Learning</option>
+                                <option value="Productivity">⚡ Productivity</option>
+                                <option value="Mental">🧠 Mental Health</option>
+                                <option value="Social">👥 Social</option>
+                                <option value="Creative">🎨 Creative</option>
+                                <option value="Other">✨ Other</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Target (days/week)</label>
+                            <select id="habitTarget">
+                                <option value="7">Every day</option>
+                                <option value="5">5 days/week</option>
+                                <option value="3">3 days/week</option>
+                                <option value="1">Once a week</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" style="margin-top: 1.25rem;">
+                        <label>Choose Color</label>
+                        <div class="color-grid">
+                            <div class="color-dot selected" style="background:#4ade80" data-color="#4ade80" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#60a5fa" data-color="#60a5fa" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#a78bfa" data-color="#a78bfa" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#fb923c" data-color="#fb923c" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#f472b6" data-color="#f472b6" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#2dd4bf" data-color="#2dd4bf" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#facc15" data-color="#facc15" onclick="selectColor(this)"></div>
+                            <div class="color-dot" style="background:#f87171" data-color="#f87171" onclick="selectColor(this)"></div>
+                        </div>
+                    </div>
+                    <button class="btn-create" onclick="addHabit()">Create Habit</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ============================================
+// CONFIG
+// ============================================
+const API = '';  // relative URLs
+
+// ============================================
+// STATE
+// ============================================
+let state = {
+    habits: [],
+    user: null,
+    token: null,
+    selectedColor: '#4ade80',
+    lineChart: null,
+    gaugeChart: null,
+    filterCategory: 'all'
+};
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('hf_token');
+    const user = localStorage.getItem('hf_user');
+    if (token && user) {
+        state.token = token;
+        state.user = JSON.parse(user);
+        showApp();
+    }
+
+    // Date header
+    const now = new Date();
+    document.getElementById('headerDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    // Enter key for login
+    document.getElementById('loginPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
+    document.getElementById('regPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleRegister(); });
+});
+
+// ============================================
+// AUTH HELPERS
+// ============================================
+function showAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'flex' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'flex' : 'none';
+    document.getElementById('authError').style.display = 'none';
+}
+
+function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) return showAuthError('Please fill in all fields');
+
+    const btn = document.querySelector('#loginForm .btn-auth');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        state.token = data.token;
+        state.user = data.user;
+        localStorage.setItem('hf_token', data.token);
+        localStorage.setItem('hf_user', JSON.stringify(data.user));
+        showApp();
+    } catch (err) {
+        showAuthError(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In';
+    }
+}
+
+async function handleRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    if (!name || !email || !password) return showAuthError('Please fill in all fields');
+    if (password.length < 6) return showAuthError('Password must be at least 6 characters');
+
+    const btn = document.querySelector('#registerForm .btn-auth');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        state.token = data.token;
+        state.user = data.user;
+        localStorage.setItem('hf_token', data.token);
+        localStorage.setItem('hf_user', JSON.stringify(data.user));
+        showApp();
+    } catch (err) {
+        showAuthError(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Create Account';
+    }
+}
+
+function logout() {
+    state.token = null;
+    state.user = null;
+    state.habits = [];
+    localStorage.removeItem('hf_token');
+    localStorage.removeItem('hf_user');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+}
+
+// ============================================
+// APP INIT
+// ============================================
+function showApp() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    // Set user info
+    const u = state.user;
+    document.getElementById('userName').textContent = u.name;
+    document.getElementById('userEmail').textContent = u.email;
+    document.getElementById('userAvatar').textContent = u.name.charAt(0).toUpperCase();
+    document.getElementById('welcomeTitle').textContent = `Welcome back, ${u.name.split(' ')[0]}! 👋`;
+
+    loadHabits();
+}
+
+// ============================================
+// API HELPERS
+// ============================================
+function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` };
+}
+
+async function apiFetch(url, opts = {}) {
+    const res = await fetch(url, { headers: authHeaders(), ...opts });
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    return res;
+}
+
+// ============================================
+// HABITS API
+// ============================================
+async function loadHabits() {
+    setSyncStatus('syncing');
+    try {
+        const res = await apiFetch('/api/habits');
+        const data = await res.json();
+        state.habits = Array.isArray(data) ? data : [];
+        setSyncStatus('ok');
+        renderAll();
+    } catch (err) {
+        setSyncStatus('error');
+        showToast('Failed to load habits', true);
+    }
+}
+
+async function addHabit() {
+    const name = document.getElementById('habitName').value.trim();
+    const category = document.getElementById('habitCategory').value;
+    const target = parseInt(document.getElementById('habitTarget').value);
+    if (!name) return showToast('Please enter a habit name', true);
+
+    const habit = { name, category, color: state.selectedColor, target, completed: {}, streak: 0, createdAt: new Date().toISOString() };
+
+    setSyncStatus('syncing');
+    try {
+        const res = await apiFetch('/api/habits', {
+            method: 'POST',
+            body: JSON.stringify(habit)
+        });
+        const newHabit = await res.json();
+        state.habits.push(newHabit);
+        setSyncStatus('ok');
+        document.getElementById('habitName').value = '';
+        renderAll();
+        showPage('habits', document.querySelectorAll('.nav-item')[1]);
+        showToast('Habit created! 🎉');
+    } catch (err) {
+        setSyncStatus('error');
+        showToast('Failed to create habit', true);
+    }
+}
+
+async function toggleHabit(id) {
+    const habit = state.habits.find(h => h._id === id || h.id === id);
+    if (!habit) return;
+    const today = todayStr();
+    if (!habit.completed) habit.completed = {};
+    habit.completed[today] = !habit.completed[today];
+    calculateStreak(habit);
+
+    setSyncStatus('syncing');
+    try {
+        await apiFetch(`/api/habits/${habit._id || habit.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(habit)
+        });
+        setSyncStatus('ok');
+        renderAll();
+        showToast(habit.completed[today] ? '✅ Habit completed!' : 'Habit unchecked');
+    } catch (err) {
+        habit.completed[today] = !habit.completed[today]; // revert
+        setSyncStatus('error');
+        showToast('Failed to update', true);
+    }
+}
+
+async function deleteHabit(id) {
+    if (!confirm('Delete this habit?')) return;
+    setSyncStatus('syncing');
+    try {
+        await apiFetch(`/api/habits/${id}`, { method: 'DELETE' });
+        state.habits = state.habits.filter(h => (h._id || h.id) !== id);
+        setSyncStatus('ok');
+        renderAll();
+        showToast('Habit deleted');
+    } catch (err) {
+        setSyncStatus('error');
+        showToast('Failed to delete', true);
+    }
+}
+
+// ============================================
+// CALCULATIONS
+// ============================================
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function calculateStreak(habit) {
+    let streak = 0;
+    const d = new Date();
+    while (true) {
+        const s = d.toISOString().split('T')[0];
+        if (habit.completed && habit.completed[s]) { streak++; d.setDate(d.getDate() - 1); }
+        else break;
+    }
+    habit.streak = streak;
+}
+
+function getCompletionRate(habit, days = 30) {
+    const keys = Object.keys(habit.completed || {});
+    return Math.round((keys.length / days) * 100);
+}
+
+function getWeeklyRate(habit) {
+    const today = new Date();
+    let done = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const s = d.toISOString().split('T')[0];
+        if (habit.completed && habit.completed[s]) done++;
+    }
+    return Math.round((done / 7) * 100);
+}
+
+// ============================================
+// RENDER ALL
+// ============================================
+function renderAll() {
+    renderDashboard();
+    renderHabitsPage();
+    populateCategoryFilters();
+    populateHeatmapSelect();
+    renderHeatmap();
+}
+
+// ============================================
+// DASHBOARD
+// ============================================
+function renderDashboard() {
+    const today = todayStr();
+    const habits = state.habits;
+    const completedToday = habits.filter(h => h.completed && h.completed[today]).length;
+    const maxStreak = habits.length ? Math.max(...habits.map(h => h.streak || 0)) : 0;
+    const totalCompleted = habits.reduce((s, h) => s + Object.keys(h.completed || {}).length, 0);
+    const possible = habits.length * 30;
+    const monthlyRate = possible > 0 ? Math.round((totalCompleted / possible) * 100) : 0;
+
+    document.getElementById('statCompleted').textContent = completedToday;
+    document.getElementById('statStreak').textContent = maxStreak;
+    document.getElementById('statMonthly').textContent = monthlyRate + '%';
+    document.getElementById('statGoals').textContent = `${completedToday}/${habits.length}`;
+
+    renderHabitOverviewTable();
+    renderWeeklyProgress();
+    renderCompletionRing(monthlyRate);
+    renderTopHabits();
+    renderLineChart();
+    renderGauge(monthlyRate);
+}
+
+function renderHabitOverviewTable() {
+    const habits = state.habits;
+    const table = document.getElementById('habitOverviewTable').querySelector('tbody');
+    if (!habits.length) { table.innerHTML = '<tr><td colspan="15" style="text-align:center; color: var(--text-muted); padding: 2rem;">No habits yet. Add one to get started!</td></tr>'; return; }
+
+    // Build 14 day headers
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        days.push({ date: d.toISOString().split('T')[0], label: d.toLocaleDateString('en-US', { weekday: 'short' }), day: d.getDate(), isToday: i === 0 });
+    }
+
+    // Header row
+    let headHtml = '<tr><th>Habit</th>';
+    days.forEach(d => { headHtml += `<th>${d.label}<br><small style="font-weight:400;">${d.day}</small></th>`; });
+    headHtml += '</tr>';
+
+    // Habit rows
+    let rowsHtml = '';
+    habits.forEach(h => {
+        const hid = h._id || h.id;
+        rowsHtml += `<tr><td class="habit-name-cell"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${h.color}; margin-right:6px;"></span>${h.name}</td>`;
+        days.forEach(d => {
+            const done = h.completed && h.completed[d.date];
+            if (d.isToday) {
+                rowsHtml += `<td><div class="dot today ${done ? 'done' : ''}" onclick="toggleHabit('${hid}')" title="${d.date}">${done ? '✓' : ''}</div></td>`;
+            } else {
+                rowsHtml += `<td><div class="dot ${done ? 'done' : 'miss'}" title="${d.date}">${done ? '✓' : '✕'}</div></td>`;
+            }
+        });
+        rowsHtml += '</tr>';
+    });
+
+    table.innerHTML = headHtml + rowsHtml;
+}
+
+function renderWeeklyProgress() {
+    const list = document.getElementById('weeklyProgressList');
+    const habits = state.habits.slice(0, 5);
+    if (!habits.length) { list.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No habits yet</p>'; return; }
+
+    list.innerHTML = habits.map(h => {
+        const pct = getWeeklyRate(h);
+        return `
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="progress-name">${h.name}</span>
+                <span class="progress-pct">${pct}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${pct}%; background: linear-gradient(90deg, ${h.color}, ${h.color}88);"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderCompletionRing(pct) {
+    const circ = 2 * Math.PI * 55;
+    const offset = circ * (1 - pct / 100);
+    document.getElementById('completionRing').style.strokeDashoffset = offset;
+    document.getElementById('completionPct').textContent = pct + '%';
+}
+
+function renderTopHabits() {
+    const list = document.getElementById('topHabitsList');
+    const sorted = [...state.habits].sort((a, b) => Object.keys(b.completed || {}).length - Object.keys(a.completed || {}).length).slice(0, 4);
+    if (!sorted.length) { list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No habits yet</p>'; return; }
+
+    list.innerHTML = sorted.map(h => `
+        <div class="top-habit-row">
+            <div class="top-habit-check" style="border-color: ${h.color}; color: ${h.color}; background: ${h.color}22;">✓</div>
+            <div class="top-habit-name">${h.name}</div>
+            <div style="margin-left: auto; font-size: 0.78rem; color: var(--text-muted);">${Object.keys(h.completed || {}).length}d</div>
+        </div>`).join('');
+}
+
+function renderLineChart() {
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const data = [];
+    const today = new Date();
+    const dow = today.getDay(); // 0=Sun
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const s = d.toISOString().split('T')[0];
+        data.push(state.habits.filter(h => h.completed && h.completed[s]).length);
+    }
+
+    if (state.lineChart) state.lineChart.destroy();
+    state.lineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [{
+                data,
+                fill: true,
+                borderColor: '#4ade80',
+                backgroundColor: 'rgba(74,222,128,0.08)',
+                pointBackgroundColor: '#4ade80',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.4,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw} habits` } } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { family: 'DM Sans' } } },
+                y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', stepSize: 1, font: { family: 'DM Sans' } }, min: 0 }
+            }
+        }
+    });
+}
+
+function renderGauge(pct) {
+    const canvas = document.getElementById('gaugeChart');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 200, 110);
+
+    const cx = 100, cy = 100, r = 80;
+    const startAngle = Math.PI;
+    const endAngle = 2 * Math.PI;
+
+    // Background arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.strokeStyle = '#1a2030';
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Fill arc
+    const fillEnd = startAngle + (pct / 100) * Math.PI;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, fillEnd);
+    const grad = ctx.createLinearGradient(20, 100, 180, 100);
+    grad.addColorStop(0, '#60a5fa');
+    grad.addColorStop(0.5, '#4ade80');
+    grad.addColorStop(1, '#2dd4bf');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    document.getElementById('gaugeNum').textContent = pct + '%';
+}
+
+// ============================================
+// HEATMAP
+// ============================================
+function populateHeatmapSelect() {
+    const sel = document.getElementById('heatmapHabitSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="all">All Habits</option>';
+    state.habits.forEach(h => {
+        const o = document.createElement('option');
+        o.value = h._id || h.id;
+        o.textContent = h.name;
+        sel.appendChild(o);
+    });
+    if (prev) sel.value = prev;
+}
+
+function renderHeatmap() {
+    const grid = document.getElementById('heatmapGrid');
+    const sel = document.getElementById('heatmapHabitSelect').value;
+    const today = new Date();
+    const todayS = todayStr();
+    grid.innerHTML = '';
+
+    for (let i = 89; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const s = d.toISOString().split('T')[0];
+
+        let done = false;
+        if (sel === 'all') {
+            done = state.habits.some(h => h.completed && h.completed[s]);
+        } else {
+            const h = state.habits.find(h => (h._id || h.id) === sel);
+            done = h && h.completed && h.completed[s];
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `heatmap-cell ${done ? 'done' : ''} ${s === todayS ? 'today' : ''}`;
+        cell.title = s;
+        grid.appendChild(cell);
+    }
+}
+
+// ============================================
+// HABITS PAGE
+// ============================================
+function populateCategoryFilters() {
+    const filters = document.getElementById('categoryFilters');
+    const cats = ['all', ...new Set(state.habits.map(h => h.category))];
+    filters.innerHTML = cats.map(c => `
+        <button class="filter-btn ${state.filterCategory === c ? 'active' : ''}" onclick="setFilter('${c}')">
+            ${c === 'all' ? 'All' : c}
+        </button>`).join('');
+}
+
+function setFilter(cat) {
+    state.filterCategory = cat;
+    populateCategoryFilters();
+    renderHabitsPage();
+}
+
+function renderHabitsPage() {
+    const grid = document.getElementById('habitsGrid');
+    const empty = document.getElementById('habitsEmpty');
+    const today = todayStr();
+
+    let habits = state.filterCategory === 'all' ? state.habits : state.habits.filter(h => h.category === state.filterCategory);
+
+    document.getElementById('habitsCount').textContent = `${habits.length} active habit${habits.length !== 1 ? 's' : ''}`;
+
+    if (!habits.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    grid.innerHTML = habits.map(h => {
+        const hid = h._id || h.id;
+        const doneToday = h.completed && h.completed[today];
+        const pct = getCompletionRate(h);
+        return `
+        <div class="habit-card">
+            <div class="habit-card-accent" style="background: linear-gradient(90deg, ${h.color}, ${h.color}66);"></div>
+            <div class="habit-card-header">
+                <div>
+                    <div class="habit-card-name">${h.name}</div>
+                    <div class="habit-card-cat">${h.category} &middot; ${pct}% this month</div>
+                </div>
+                <div class="habit-card-streak">🔥 ${h.streak || 0}</div>
+            </div>
+            <div class="progress-bar" style="height: 5px; margin-bottom: 1rem;">
+                <div class="progress-fill" style="width: ${pct}%; background: ${h.color};"></div>
+            </div>
+            <div class="habit-card-actions">
+                <button class="btn-mark ${doneToday ? 'done' : 'pending'}" onclick="toggleHabit('${hid}')">
+                    ${doneToday ? '✓ Done Today' : 'Mark Today'}
+                </button>
+                <button class="btn-del" onclick="deleteHabit('${hid}')">🗑</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ============================================
+// UI HELPERS
+// ============================================
+function showPage(name, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${name}`).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (name === 'dashboard') renderDashboard();
+}
+
+function selectColor(el) {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    state.selectedColor = el.dataset.color;
+}
+
+function setSyncStatus(status) {
+    const dot = document.getElementById('syncDot');
+    const text = document.getElementById('syncText');
+    dot.className = 'sync-dot';
+    if (status === 'syncing') { dot.classList.add('pulse'); text.textContent = 'Syncing...'; }
+    else if (status === 'error') { dot.classList.add('error'); text.textContent = 'Offline'; }
+    else { text.textContent = 'Connected'; }
+}
+
+function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${isError ? 'error' : ''} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Auto-refresh every 60s
+setInterval(loadHabits, 60000);
+</script>
+</body>
+</html>
